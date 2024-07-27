@@ -5,12 +5,14 @@ VisualStudioVersion = 17.10.35027.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NextGenToDoApp", "NextGenToDoApp.csproj", "{0D3A49A6-F9D3-47ED-8882-7AB4E61CF45A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NextGenToDoApp.Client", "..\NextGenToDoApp.Client\NextGenToDoApp.Client.csproj", "{8190C4DA-A9C8-4A87-A222-C6703B734795}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NextGenToDoApp.Client", "..\NextGenToDoApp.Client\NextGenToDoApp.Client.csproj", "{8190C4DA-A9C8-4A87-A222-C6703B734795}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{451329D5-E062-421A-AD66-4B91ACED7522}"
 	ProjectSection(SolutionItems) = preProject
 		..\.gitignore = ..\.gitignore
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NextGenToDoApp.Tests", "..\NextGenToDoApp.Tests\NextGenToDoApp.Tests.csproj", "{7FB69EC3-1B15-4BDF-8CB6-F84AE927F1BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +28,10 @@ Global
 		{8190C4DA-A9C8-4A87-A222-C6703B734795}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8190C4DA-A9C8-4A87-A222-C6703B734795}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8190C4DA-A9C8-4A87-A222-C6703B734795}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FB69EC3-1B15-4BDF-8CB6-F84AE927F1BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FB69EC3-1B15-4BDF-8CB6-F84AE927F1BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FB69EC3-1B15-4BDF-8CB6-F84AE927F1BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FB69EC3-1B15-4BDF-8CB6-F84AE927F1BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

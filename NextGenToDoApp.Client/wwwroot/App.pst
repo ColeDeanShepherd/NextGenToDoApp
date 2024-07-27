@@ -1,1 +1,2 @@
+SetDocumentTitle("TestDocTitle")
 ConsoleLog("ASDFasdf")

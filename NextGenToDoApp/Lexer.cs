@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
 namespace NextGenToDoApp;
 
@@ -37,6 +32,8 @@ public static class Lexer
 
         while (nextCharIndex < sourceCode.Length)
         {
+            SkipWhitespace();
+
             bool readToken = false;
             string restOfSourceCode = sourceCode.Substring(nextCharIndex);
 
@@ -60,5 +57,13 @@ public static class Lexer
         }
 
         return tokens;
+
+        void SkipWhitespace()
+        {
+            while ((nextCharIndex < sourceCode.Length) && char.IsWhiteSpace(sourceCode[nextCharIndex]))
+            {
+                nextCharIndex++;
+            }
+        }
     }
 }

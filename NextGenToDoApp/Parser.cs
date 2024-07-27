@@ -2,6 +2,7 @@
 
 public enum ParseNodeType
 {
+    Program,
     Expression,
     FunctionCall,
     StringLiteral,
@@ -46,6 +47,8 @@ public record TerminalSymbol(TokenType TokenType) : IGrammarSymbol;
 
 public record NonterminalSymbol(ParseNodeType ParseNodeType) : IGrammarSymbol;
 
+public record ZeroOrMoreSymbol(IGrammarSymbol GrammarSymbol): IGrammarSymbol;
+
 public record PrefixExpressionDefinition(
     ParseNodeType ParseNodeType,
     List<IGrammarSymbol> RHS
@@ -76,6 +79,8 @@ public static class Parser
 
     public static readonly List<NonterminalDefinition> Grammar =
     [
+        new NonterminalDefinition(ParseNodeType.Program, [ new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression)) ]),
+
         new PrefixExpressionDefinition(ParseNodeType.StringLiteral, [ Sym(TokenType.StringLiteral) ]),
         new PrefixExpressionDefinition(ParseNodeType.Identifier, [ Sym(TokenType.Identifier) ]),
 
@@ -85,6 +90,8 @@ public static class Parser
             12
         )
     ];
+
+    public static readonly NonterminalDefinition RootNonterminal = Grammar.Single(r => r.ParseNodeType == ParseNodeType.Program);
 
     public static readonly List<PrefixExpressionDefinition> PrefixExpressionDefinitions = Grammar
         .OfType<PrefixExpressionDefinition>()
@@ -103,7 +110,7 @@ public static class Parser
     public static ParseNode Parse(List<Token> tokens)
     {
         var state = new ParseState(tokens, 0);
-        return ParseExpression(state);
+        return ParseNonterminal(state, RootNonterminal);
     }
 
     public static ParseNode ParseNonterminal(ParseState state, ParseNodeType parseNodeType, List<ParseNode>? parsedChildren = null)
@@ -123,25 +130,36 @@ public static class Parser
 
         foreach (var grammarSymbol in nonterminalDefinition.RHS.Skip(children.Count))
         {
-            switch (grammarSymbol)
-            {
-                case TerminalSymbol terminalSymbol:
-                    var token = ReadToken(state);
-                    if (token.Type != terminalSymbol.TokenType)
-                    {
-                        throw new Exception($"Expected token type {terminalSymbol.TokenType} but got {token.Type}");
-                    }
-                    children.Add(new(ParseNodeType.Token, new(), token));
-                    break;
-                case NonterminalSymbol nonterminalSymbol:
-                    children.Add(ParseNonterminal(state, nonterminalSymbol.ParseNodeType));
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
+            children.AddRange(ParseGrammarSymbol(state, grammarSymbol));
         }
 
         return new ParseNode(nonterminalDefinition.ParseNodeType, children, null);
+    }
+
+    public static List<ParseNode> ParseGrammarSymbol(ParseState state, IGrammarSymbol grammarSymbol)
+    {
+        switch (grammarSymbol)
+        {
+            case TerminalSymbol terminalSymbol:
+                var token = ReadToken(state);
+                if (token.Type != terminalSymbol.TokenType)
+                {
+                    throw new Exception($"Expected token type {terminalSymbol.TokenType} but got {token.Type}");
+                }
+                return [new(ParseNodeType.Token, new(), token)];
+            case NonterminalSymbol nonterminalSymbol:
+                return [ParseNonterminal(state, nonterminalSymbol.ParseNodeType)];
+            case ZeroOrMoreSymbol zeroOrMoreSymbol:
+                var possibleFirstTokenTypes = GetPossibleFirstTokenTypes(zeroOrMoreSymbol.GrammarSymbol);
+                List<ParseNode> nodes = new();
+                while (TryPeekToken(state) != null && possibleFirstTokenTypes.Contains(PeekToken(state).Type))
+                {
+                    nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.GrammarSymbol));
+                }
+                return nodes;
+            default:
+                throw new NotImplementedException();
+        }
     }
 
     public static ParseNode ParseExpression(ParseState state)
@@ -191,9 +209,23 @@ public static class Parser
         return grammarSymbol switch
         {
             TerminalSymbol terminalSymbol => new HashSet<TokenType> { terminalSymbol.TokenType },
-            NonterminalSymbol nonterminalSymbol => GetPossibleFirstTokenTypes(Grammar.Single(r => r.ParseNodeType == nonterminalSymbol.ParseNodeType)),
+            NonterminalSymbol nonterminalSymbol => GetPossibleFirstTokenTypes(nonterminalSymbol.ParseNodeType),
             _ => throw new NotImplementedException()
         };
+    }
+
+    public static HashSet<TokenType> GetPossibleFirstTokenTypes(ParseNodeType parseNodeType)
+    {
+        if (parseNodeType == ParseNodeType.Expression)
+        {
+            return PrefixExpressionDefinitions.SelectMany(GetPossibleFirstTokenTypes).ToHashSet();
+        }
+
+        return Grammar
+            .Single(r => r.ParseNodeType == parseNodeType)
+            .RHS
+            .SelectMany(GetPossibleFirstTokenTypes)
+            .ToHashSet();
     }
 
     private static Token? TryPeekToken(ParseState state)

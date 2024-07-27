@@ -22,7 +22,8 @@ public static class TypeChecker
 {
     public static Dictionary<string, ISymbol> Symbols = new()
     {
-        { "ConsoleLog", new BuiltInSymbol("ConsoleLog", new FunctionType([ StringType.Instance ], VoidType.Instance)) }
+        { "ConsoleLog", new BuiltInSymbol("ConsoleLog", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
+        { "SetDocumentTitle", new BuiltInSymbol("SetDocumentTitle", new FunctionType([ StringType.Instance ], VoidType.Instance)) }
     };
 
     public static IType? CheckType(ParseNode parseNode)
