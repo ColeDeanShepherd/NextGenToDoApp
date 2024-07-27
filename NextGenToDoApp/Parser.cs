@@ -2,14 +2,27 @@
 
 public enum ParseNodeType
 {
-    FunctionCall,
     Expression,
+    FunctionCall,
     StringLiteral,
     Identifier,
     Token
 }
 
-public record ParseNode(ParseNodeType ParseNodeType, List<ParseNode> Children, Token? Token);
+public class ParseNode
+{
+    public ParseNodeType ParseNodeType;
+    public List<ParseNode> Children;
+    public Token? Token;
+    public IType? Type = null;
+
+    public ParseNode(ParseNodeType parseNodeType, List<ParseNode> children, Token? token)
+    {
+        ParseNodeType = parseNodeType;
+        Children = children;
+        Token = token;
+    }
+}
 
 public record NonterminalDefinition(ParseNodeType ParseNodeType, List<IGrammarSymbol> RHS);
 
