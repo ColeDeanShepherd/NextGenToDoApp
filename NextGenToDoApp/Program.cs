@@ -1,10 +1,10 @@
-﻿namespace NextGenToDoApp
+﻿namespace NextGenToDoApp;
+
+internal class Program
 {
-    internal class Program
+    static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            Console.WriteLine("Hello, World!");
-        }
+        var tokens = Lexer.Tokenize("ConsoleLog(\"Hello, world!\")");
+
     }
 }
