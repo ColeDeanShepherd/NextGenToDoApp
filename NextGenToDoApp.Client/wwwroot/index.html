@@ -24,6 +24,22 @@
         window.setDocumentTitle = (title) => {
             document.title = title;
         };
+
+        window.text = (data) => {
+            return document.createTextNode(data);
+        };
+
+        window.h1 = (children) => {
+            const elem = document.createElement('h1');
+            for (const child of children) {
+                elem.appendChild(child);
+            }
+            return elem;
+        };
+
+        window.CreateUI = (elem) => {
+            document.body.appendChild(elem);
+        };
     </script>
 </body>
 

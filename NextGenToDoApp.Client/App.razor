@@ -19,7 +19,7 @@
     {
         var sourceCode = await Http.GetStringAsync("App.pst");
         Interpreter.JSRuntime = JSRuntime;
-        var result = Interpreter.Interpret(sourceCode);
+        var result = await Interpreter.Interpret(sourceCode);
 
         await base.OnInitializedAsync();
     }
