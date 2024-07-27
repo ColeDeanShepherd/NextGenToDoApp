@@ -1,2 +1,4 @@
 SetDocumentTitle("Next Gen To-Do App")
-ConsoleLog("ASDFasdf")
+CreateUI(
+  h1([ text("Hello, world, from Presto!") ])
+)

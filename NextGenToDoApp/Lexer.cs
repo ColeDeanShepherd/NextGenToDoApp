@@ -7,6 +7,9 @@ public enum TokenType
     Identifier,
     LeftParen,
     RightParen,
+    LeftSquareBracket,
+    RightSquareBracket,
+    Comma,
     StringLiteral
 }
 
@@ -16,9 +19,12 @@ public static class Lexer
 {
     public static readonly List<(TokenType TokenType, string RegexString)> TokenRegexPatterns =
     [
-        (TokenType.Identifier, @"[a-zA-Z]+"),
+        (TokenType.Identifier, @"[a-zA-Z][a-zA-Z0-9]*"),
         (TokenType.LeftParen, @"\("),
         (TokenType.RightParen, @"\)"),
+        (TokenType.LeftSquareBracket, @"\["),
+        (TokenType.RightSquareBracket, @"\]"),
+        (TokenType.Comma, @","),
         (TokenType.StringLiteral, @"""[^""]*"""),
     ];
 
@@ -52,7 +58,7 @@ public static class Lexer
 
             if (!readToken)
             {
-                throw new Exception($"Unexpected character at index {nextCharIndex}");
+                throw new Exception($"Unexpected character at index {nextCharIndex}: '{sourceCode[nextCharIndex]}'");
             }
         }
 

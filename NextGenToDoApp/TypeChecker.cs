@@ -16,14 +16,24 @@ public record StringType() : IType
     public static StringType Instance = new();
 }
 
+public record ListType(IType ElementType) : IType;
+
 public record FunctionType(List<IType> ParamTypes, IType ReturnType) : IType;
+
+public record BuiltInType(string Name) : IType;
 
 public static class TypeChecker
 {
+    public static IType HtmlNodeType = new BuiltInType("HtmlNode");
+    public static ISymbol HtmlNodeSymbol = new BuiltInSymbol("HtmlNode", HtmlNodeType);
+
     public static Dictionary<string, ISymbol> Symbols = new()
     {
         { "ConsoleLog", new BuiltInSymbol("ConsoleLog", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
-        { "SetDocumentTitle", new BuiltInSymbol("SetDocumentTitle", new FunctionType([ StringType.Instance ], VoidType.Instance)) }
+        { "SetDocumentTitle", new BuiltInSymbol("SetDocumentTitle", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
+        { "CreateUI", new BuiltInSymbol("CreateUI", new FunctionType([ HtmlNodeType ], VoidType.Instance)) },
+        { "h1", new BuiltInSymbol("h1", new FunctionType([ new ListType(HtmlNodeType) ], HtmlNodeType)) },
+        { "text", new BuiltInSymbol("text", new FunctionType([ StringType.Instance ], HtmlNodeType)) }
     };
 
     public static IType? CheckType(ParseNode parseNode)
@@ -38,6 +48,7 @@ public static class TypeChecker
             ParseNodeType.Expression => CheckType(parseNode.Children[0]),
             ParseNodeType.FunctionCall => (CheckType(parseNode.Children[0]) as FunctionType)?.ReturnType,
             ParseNodeType.StringLiteral => StringType.Instance,
+            ParseNodeType.ListLiteral => new ListType(CheckType(parseNode.Children[0])!),
             ParseNodeType.Identifier => CheckType(parseNode, Symbols[parseNode.Children[0].Token!.Text]),
             _ => null
         };

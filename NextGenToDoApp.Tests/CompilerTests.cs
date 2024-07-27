@@ -8,8 +8,10 @@ public class CompilerTests
     public void CompilerWorks()
     {
         string sourceCode =
-@"SetDocumentTitle(""TestDocTitle"")
-ConsoleLog(""ASDFasdf"")";
+@"SetDocumentTitle(""Next Gen To-Do App"")
+CreateUI(
+  h1([ text(""Hello, world, from Presto!"") ])
+)";
         var tokens = Lexer.Tokenize(sourceCode);
         var parseTree = Parser.Parse(tokens);
         TypeChecker.CheckType(parseTree);

@@ -6,6 +6,7 @@ public enum ParseNodeType
     Expression,
     FunctionCall,
     StringLiteral,
+    ListLiteral,
     Identifier,
     Token
 }
@@ -18,6 +19,7 @@ public static class ParseNodeTypeExtensions
             ParseNodeType.Expression => true,
             ParseNodeType.FunctionCall => true,
             ParseNodeType.StringLiteral => true,
+            ParseNodeType.ListLiteral => true,
             ParseNodeType.Identifier => true,
             _ => false
         };
@@ -37,6 +39,13 @@ public class ParseNode
         Children = children;
         Token = token;
     }
+
+    public override string ToString()
+    {
+        var tokenStr = Token?.Text ?? "";
+        var childrenStr = string.Join("", Children.Select(c => c.ToString()));
+        return $"{tokenStr}{childrenStr}";
+    }
 }
 
 public record NonterminalDefinition(ParseNodeType ParseNodeType, List<IGrammarSymbol> RHS);
@@ -47,7 +56,7 @@ public record TerminalSymbol(TokenType TokenType) : IGrammarSymbol;
 
 public record NonterminalSymbol(ParseNodeType ParseNodeType) : IGrammarSymbol;
 
-public record ZeroOrMoreSymbol(IGrammarSymbol GrammarSymbol): IGrammarSymbol;
+public record ZeroOrMoreSymbol(IGrammarSymbol GrammarSymbol, IGrammarSymbol? Separator = null): IGrammarSymbol;
 
 public record PrefixExpressionDefinition(
     ParseNodeType ParseNodeType,
@@ -82,6 +91,13 @@ public static class Parser
         new NonterminalDefinition(ParseNodeType.Program, [ new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression)) ]),
 
         new PrefixExpressionDefinition(ParseNodeType.StringLiteral, [ Sym(TokenType.StringLiteral) ]),
+        new PrefixExpressionDefinition(
+            ParseNodeType.ListLiteral,
+            [
+                Sym(TokenType.LeftSquareBracket),
+                new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression), Separator: Sym(TokenType.Comma)),
+                Sym(TokenType.RightSquareBracket)
+            ]),
         new PrefixExpressionDefinition(ParseNodeType.Identifier, [ Sym(TokenType.Identifier) ]),
 
         new PostfixExpressionDefinition(
@@ -151,10 +167,21 @@ public static class Parser
                 return [ParseNonterminal(state, nonterminalSymbol.ParseNodeType)];
             case ZeroOrMoreSymbol zeroOrMoreSymbol:
                 var possibleFirstTokenTypes = GetPossibleFirstTokenTypes(zeroOrMoreSymbol.GrammarSymbol);
+                var separatorFirstTokenTypes = zeroOrMoreSymbol.Separator == null ? new HashSet<TokenType>() : GetPossibleFirstTokenTypes(zeroOrMoreSymbol.Separator);
                 List<ParseNode> nodes = new();
                 while (TryPeekToken(state) != null && possibleFirstTokenTypes.Contains(PeekToken(state).Type))
                 {
                     nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.GrammarSymbol));
+
+                    if (zeroOrMoreSymbol.Separator != null)
+                    {
+                        if (TryPeekToken(state) == null || !separatorFirstTokenTypes.Contains(PeekToken(state).Type))
+                        {
+                            break;
+                        }
+
+                        nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.Separator));
+                    }
                 }
                 return nodes;
             default:
