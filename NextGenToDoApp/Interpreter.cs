@@ -1,7 +1,11 @@
-﻿namespace NextGenToDoApp;
+﻿using Microsoft.JSInterop;
+
+namespace NextGenToDoApp;
 
 public static class Interpreter
 {
+    public static IJSRuntime JSRuntime = null!;
+
     public static object? Interpret(string sourceCode)
     {
         var tokens = Lexer.Tokenize(sourceCode);
@@ -48,7 +52,7 @@ public static class Interpreter
                     throw new Exception("SetDocumentTitle expects a string argument");
                 }
 
-                Console.WriteLine("SetDocumentTitle: " + s);
+                Task.Run(() => JSRuntime.InvokeVoidAsync("setDocumentTitle", s));
                 return null;
             }
             else

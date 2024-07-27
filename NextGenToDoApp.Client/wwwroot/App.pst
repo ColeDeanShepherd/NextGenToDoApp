@@ -1,2 +1,2 @@
-SetDocumentTitle("TestDocTitle")
+SetDocumentTitle("Next Gen To-Do App")
 ConsoleLog("ASDFasdf")
