@@ -1,4 +1,6 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿@inject HttpClient Http
+
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -11,9 +13,12 @@
     </NotFound>
 </Router>
 
-@{
-    var tokens = Lexer.Tokenize("ConsoleLog(\"Hello, world, from Presto!\")");
-    var parseTree = Parser.Parse(tokens);
-    TypeChecker.CheckType(parseTree);
-    var result = Interpreter.Interpret(parseTree);
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var sourceCode = await Http.GetStringAsync("App.pst");
+        var result = Interpreter.Interpret(sourceCode);
+
+        await base.OnInitializedAsync();
+    }
 }

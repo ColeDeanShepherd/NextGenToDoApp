@@ -2,6 +2,15 @@
 
 public static class Interpreter
 {
+    public static object? Interpret(string sourceCode)
+    {
+        var tokens = Lexer.Tokenize(sourceCode);
+        var parseTree = Parser.Parse(tokens);
+        TypeChecker.CheckType(parseTree);
+        var result = Interpreter.Interpret(parseTree);
+        return result;
+    }
+
     public static object? Interpret(ParseNode parseNode)
     {
         if (parseNode.ParseNodeType == ParseNodeType.FunctionCall)
