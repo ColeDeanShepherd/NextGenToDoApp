@@ -7,5 +7,6 @@ internal class Program
         var tokens = Lexer.Tokenize("ConsoleLog(\"Hello, world!\")");
         var parseTree = Parser.Parse(tokens);
         TypeChecker.CheckType(parseTree);
+        var result = Interpreter.Interpret(parseTree);
     }
 }

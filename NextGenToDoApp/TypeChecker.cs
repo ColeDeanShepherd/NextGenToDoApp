@@ -37,7 +37,7 @@ public static class TypeChecker
             ParseNodeType.Expression => CheckType(parseNode.Children[0]),
             ParseNodeType.FunctionCall => (CheckType(parseNode.Children[0]) as FunctionType)?.ReturnType,
             ParseNodeType.StringLiteral => StringType.Instance,
-            ParseNodeType.Identifier => GetType(Symbols[parseNode.Children[0].Token!.Text]),
+            ParseNodeType.Identifier => CheckType(parseNode, Symbols[parseNode.Children[0].Token!.Text]),
             _ => null
         };
 
@@ -46,9 +46,14 @@ public static class TypeChecker
         return type;
     }
     
-    public static IType? GetType(ISymbol symbol) => symbol switch
+    public static IType? CheckType(ParseNode parseNode, ISymbol symbol)
     {
-        BuiltInSymbol builtInSymbol => builtInSymbol.Type,
-        _ => null
-    };
+        parseNode.Symbol = symbol;
+
+        return symbol switch
+        {
+            BuiltInSymbol builtInSymbol => builtInSymbol.Type,
+            _ => null
+        };
+    }
 }

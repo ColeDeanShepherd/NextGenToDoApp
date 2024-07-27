@@ -9,11 +9,25 @@ public enum ParseNodeType
     Token
 }
 
+public static class ParseNodeTypeExtensions
+{
+    public static bool IsExpression(this ParseNodeType parseNodeType) =>
+        parseNodeType switch
+        {
+            ParseNodeType.Expression => true,
+            ParseNodeType.FunctionCall => true,
+            ParseNodeType.StringLiteral => true,
+            ParseNodeType.Identifier => true,
+            _ => false
+        };
+}
+
 public class ParseNode
 {
     public ParseNodeType ParseNodeType;
     public List<ParseNode> Children;
     public Token? Token;
+    public ISymbol? Symbol = null;
     public IType? Type = null;
 
     public ParseNode(ParseNodeType parseNodeType, List<ParseNode> children, Token? token)
