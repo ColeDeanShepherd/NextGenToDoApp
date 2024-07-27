@@ -10,3 +10,10 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+@{
+    var tokens = Lexer.Tokenize("ConsoleLog(\"Hello, world, from Presto!\")");
+    var parseTree = Parser.Parse(tokens);
+    TypeChecker.CheckType(parseTree);
+    var result = Interpreter.Interpret(parseTree);
+}
