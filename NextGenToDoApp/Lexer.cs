@@ -10,7 +10,8 @@ public enum TokenType
     LeftSquareBracket,
     RightSquareBracket,
     Comma,
-    StringLiteral
+    StringLiteral,
+    SingleLineComment
 }
 
 public record Token(TokenType Type, string Text);
@@ -26,6 +27,7 @@ public static class Lexer
         (TokenType.RightSquareBracket, @"\]"),
         (TokenType.Comma, @","),
         (TokenType.StringLiteral, @"""[^""]*"""),
+        (TokenType.SingleLineComment, @"//[^\\r\n]*"),
     ];
 
     public static List<Token> Tokenize(string sourceCode)

@@ -11,7 +11,9 @@ public class CompilerTests
 @"setDocumentTitle(""Next Gen To-Do App"")
 createUI(
   h1([ text(""Hello, world, from Presto!"") ])
-)";
+)
+
+// This is a comment";
         var jsCode = Compiler.Compile(sourceCode);
     }
 }

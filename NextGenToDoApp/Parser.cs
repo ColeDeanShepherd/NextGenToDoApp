@@ -8,6 +8,7 @@ public enum ParseNodeType
     StringLiteral,
     ListLiteral,
     Identifier,
+    SingleLineComment,
     Token
 }
 
@@ -88,7 +89,7 @@ public static class Parser
 
     public static readonly List<NonterminalDefinition> Grammar =
     [
-        new NonterminalDefinition(ParseNodeType.Program, [ new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression)) ]),
+        new NonterminalDefinition(ParseNodeType.Program, [ new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression)) ]), // TODO: expression OR comment
 
         new PrefixExpressionDefinition(ParseNodeType.StringLiteral, [ Sym(TokenType.StringLiteral) ]),
         new PrefixExpressionDefinition(
@@ -104,7 +105,9 @@ public static class Parser
             ParseNodeType.FunctionCall,
             [ Sym(ParseNodeType.Expression), Sym(TokenType.LeftParen), Sym(ParseNodeType.Expression), Sym(TokenType.RightParen) ],
             12
-        )
+        ),
+
+        new NonterminalDefinition(ParseNodeType.SingleLineComment, [ Sym(TokenType.SingleLineComment) ])
     ];
 
     public static readonly NonterminalDefinition RootNonterminal = Grammar.Single(r => r.ParseNodeType == ParseNodeType.Program);

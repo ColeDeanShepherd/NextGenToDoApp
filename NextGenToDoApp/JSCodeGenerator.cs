@@ -45,6 +45,10 @@ public static class JSCodeGenerator
         {
             return $"\"{parseNode.Children.Single().Token!.Text.Trim('"')}\"";
         }
+        else if (parseNode.ParseNodeType == ParseNodeType.SingleLineComment)
+        {
+            return parseNode.Children.Single().Token!.Text;
+        }
         else if (parseNode.ParseNodeType == ParseNodeType.Token)
         {
             return parseNode.Token!.Text;
