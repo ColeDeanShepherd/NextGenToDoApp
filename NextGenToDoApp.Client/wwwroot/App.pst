@@ -1,4 +1,4 @@
-SetDocumentTitle("Next Gen To-Do App")
-CreateUI(
+setDocumentTitle("Next Gen To-Do App")
+createUI(
   h1([ text("Hello, world, from Presto!") ])
 )

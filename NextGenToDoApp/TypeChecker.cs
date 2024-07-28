@@ -1,6 +1,9 @@
 ﻿namespace NextGenToDoApp;
 
-public interface ISymbol { }
+public interface ISymbol
+{
+    string Name { get; }
+}
 
 public record BuiltInSymbol(string Name, IType Type) : ISymbol;
 
@@ -29,9 +32,9 @@ public static class TypeChecker
 
     public static Dictionary<string, ISymbol> Symbols = new()
     {
-        { "ConsoleLog", new BuiltInSymbol("ConsoleLog", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
-        { "SetDocumentTitle", new BuiltInSymbol("SetDocumentTitle", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
-        { "CreateUI", new BuiltInSymbol("CreateUI", new FunctionType([ HtmlNodeType ], VoidType.Instance)) },
+        { "consoleLog", new BuiltInSymbol("consoleLog", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
+        { "setDocumentTitle", new BuiltInSymbol("setDocumentTitle", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
+        { "createUI", new BuiltInSymbol("createUI", new FunctionType([ HtmlNodeType ], VoidType.Instance)) },
         { "h1", new BuiltInSymbol("h1", new FunctionType([ new ListType(HtmlNodeType) ], HtmlNodeType)) },
         { "text", new BuiltInSymbol("text", new FunctionType([ StringType.Instance ], HtmlNodeType)) }
     };

@@ -11,8 +11,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.7" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\NextGenToDoApp\NextGenToDoApp.csproj" />
-  </ItemGroup>
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="&quot;../NextGenToDoApp.Compiler/bin/Debug/net8.0/NextGenToDoApp.Compiler.exe&quot; ./wwwroot/App.pst" />
+  </Target>
 
 </Project>

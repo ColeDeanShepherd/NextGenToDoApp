@@ -8,12 +8,10 @@ public class CompilerTests
     public void CompilerWorks()
     {
         string sourceCode =
-@"SetDocumentTitle(""Next Gen To-Do App"")
-CreateUI(
+@"setDocumentTitle(""Next Gen To-Do App"")
+createUI(
   h1([ text(""Hello, world, from Presto!"") ])
 )";
-        var tokens = Lexer.Tokenize(sourceCode);
-        var parseTree = Parser.Parse(tokens);
-        TypeChecker.CheckType(parseTree);
+        var jsCode = Compiler.Compile(sourceCode);
     }
 }

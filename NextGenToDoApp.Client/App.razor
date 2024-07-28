@@ -1,5 +1,4 @@
-﻿@inject IJSRuntime JSRuntime
-@inject HttpClient Http
+﻿@inject HttpClient Http
 
 <Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
@@ -13,14 +12,3 @@
         </LayoutView>
     </NotFound>
 </Router>
-
-@code {
-    protected override async Task OnInitializedAsync()
-    {
-        var sourceCode = await Http.GetStringAsync("App.pst");
-        Interpreter.JSRuntime = JSRuntime;
-        var result = await Interpreter.Interpret(sourceCode);
-
-        await base.OnInitializedAsync();
-    }
-}

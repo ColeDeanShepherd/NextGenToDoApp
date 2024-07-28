@@ -21,6 +21,10 @@
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
     <script>
+        window.consoleLog = (data) => {
+            console.log(data);
+        };
+
         window.setDocumentTitle = (title) => {
             document.title = title;
         };
@@ -37,10 +41,11 @@
             return elem;
         };
 
-        window.CreateUI = (elem) => {
+        window.createUI = (elem) => {
             document.body.appendChild(elem);
         };
     </script>
+    <script src="App.js"></script>
 </body>
 
 </html>
