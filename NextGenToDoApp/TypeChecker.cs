@@ -27,16 +27,13 @@ public record BuiltInType(string Name) : IType;
 
 public static class TypeChecker
 {
-    public static IType HtmlNodeType = new BuiltInType("HtmlNode");
-    public static ISymbol HtmlNodeSymbol = new BuiltInSymbol("HtmlNode", HtmlNodeType);
+    public static ISymbol TextSymbol = new BuiltInSymbol("Text", new BuiltInType("Text"));
+    public static ISymbol HtmlNodeSymbol = new BuiltInSymbol("HtmlNode", new BuiltInType("HtmlNode"));
 
     public static Dictionary<string, ISymbol> Symbols = new()
     {
-        { "consoleLog", new BuiltInSymbol("consoleLog", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
-        { "setDocumentTitle", new BuiltInSymbol("setDocumentTitle", new FunctionType([ StringType.Instance ], VoidType.Instance)) },
-        { "createUI", new BuiltInSymbol("createUI", new FunctionType([ HtmlNodeType ], VoidType.Instance)) },
-        { "h1", new BuiltInSymbol("h1", new FunctionType([ new ListType(HtmlNodeType) ], HtmlNodeType)) },
-        { "text", new BuiltInSymbol("text", new FunctionType([ StringType.Instance ], HtmlNodeType)) }
+        { TextSymbol.Name, TextSymbol },
+        { HtmlNodeSymbol.Name, HtmlNodeSymbol }
     };
 
     public static IType? CheckType(ParseNode parseNode)

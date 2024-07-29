@@ -4,14 +4,21 @@ namespace NextGenToDoApp;
 
 public enum TokenType
 {
-    Identifier,
+    SingleLineComment,
+
     LeftParen,
     RightParen,
     LeftSquareBracket,
     RightSquareBracket,
     Comma,
+    EqualsSign,
+    Colon,
+    RightArrow,
+
+    FnKeyword,
+
     StringLiteral,
-    SingleLineComment
+    Identifier,
 }
 
 public record Token(TokenType Type, string Text);
@@ -20,14 +27,21 @@ public static class Lexer
 {
     public static readonly List<(TokenType TokenType, string RegexString)> TokenRegexPatterns =
     [
-        (TokenType.Identifier, @"[a-zA-Z][a-zA-Z0-9]*"),
+        (TokenType.SingleLineComment, @"//[^\\r\n]*"),
+
         (TokenType.LeftParen, @"\("),
         (TokenType.RightParen, @"\)"),
         (TokenType.LeftSquareBracket, @"\["),
         (TokenType.RightSquareBracket, @"\]"),
         (TokenType.Comma, @","),
+        (TokenType.EqualsSign, @"="),
+        (TokenType.Colon, @":"),
+        (TokenType.RightArrow, @"->"),
+
+        (TokenType.FnKeyword, @"fn"),
+
         (TokenType.StringLiteral, @"""[^""]*"""),
-        (TokenType.SingleLineComment, @"//[^\\r\n]*"),
+        (TokenType.Identifier, @"[a-zA-Z][a-zA-Z0-9]*"),
     ];
 
     public static List<Token> Tokenize(string sourceCode)

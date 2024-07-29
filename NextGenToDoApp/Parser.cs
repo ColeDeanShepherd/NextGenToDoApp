@@ -4,12 +4,19 @@ public enum ParseNodeType
 {
     Program,
     Expression,
+    Binding,
+    FunctionDefinition,
+    ParameterTuple,
+    ParameterDefinition,
+    ExplicitReturnType,
     FunctionCall,
+    TypeArgumentTuple,
+    ArgumentTuple,
     StringLiteral,
     ListLiteral,
     Identifier,
+    Token,
     SingleLineComment,
-    Token
 }
 
 public static class ParseNodeTypeExtensions
@@ -18,6 +25,8 @@ public static class ParseNodeTypeExtensions
         parseNodeType switch
         {
             ParseNodeType.Expression => true,
+            ParseNodeType.Binding => true,
+            ParseNodeType.FunctionDefinition => true,
             ParseNodeType.FunctionCall => true,
             ParseNodeType.StringLiteral => true,
             ParseNodeType.ListLiteral => true,
@@ -57,11 +66,22 @@ public record TerminalSymbol(TokenType TokenType) : IGrammarSymbol;
 
 public record NonterminalSymbol(ParseNodeType ParseNodeType) : IGrammarSymbol;
 
+public record OptionalSymbol(IGrammarSymbol GrammarSymbol): IGrammarSymbol;
+
 public record ZeroOrMoreSymbol(IGrammarSymbol GrammarSymbol, IGrammarSymbol? Separator = null): IGrammarSymbol;
+
+public record OrderedChoiceSymbol(IGrammarSymbol[] GrammarSymbolChoices) : IGrammarSymbol;
 
 public record PrefixExpressionDefinition(
     ParseNodeType ParseNodeType,
     List<IGrammarSymbol> RHS
+) : NonterminalDefinition(ParseNodeType, RHS);
+
+public record InfixExpressionDefinition(
+    ParseNodeType ParseNodeType,
+    List<IGrammarSymbol> RHS,
+    int LeftBindingPower,
+    int RightBindingPower
 ) : NonterminalDefinition(ParseNodeType, RHS);
 
 public record PostfixExpressionDefinition(
@@ -89,7 +109,17 @@ public static class Parser
 
     public static readonly List<NonterminalDefinition> Grammar =
     [
-        new NonterminalDefinition(ParseNodeType.Program, [ new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression)) ]), // TODO: expression OR comment
+        new NonterminalDefinition(
+            ParseNodeType.Program,
+            [ new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression)) ]),
+
+        // expression is implicit
+
+        new InfixExpressionDefinition(
+            ParseNodeType.Binding,
+            [ Sym(ParseNodeType.Expression), Sym(TokenType.EqualsSign), Sym(ParseNodeType.Expression) ],
+            LeftBindingPower: 4,
+            RightBindingPower: 5),
 
         new PrefixExpressionDefinition(ParseNodeType.StringLiteral, [ Sym(TokenType.StringLiteral) ]),
         new PrefixExpressionDefinition(
@@ -100,12 +130,60 @@ public static class Parser
                 Sym(TokenType.RightSquareBracket)
             ]),
         new PrefixExpressionDefinition(ParseNodeType.Identifier, [ Sym(TokenType.Identifier) ]),
+        
+        new PrefixExpressionDefinition(
+            ParseNodeType.FunctionDefinition,
+            [
+                Sym(TokenType.FnKeyword),
+                Sym(ParseNodeType.ParameterTuple),
+                Sym(ParseNodeType.ExplicitReturnType),
+                Sym(TokenType.RightArrow),
+                Sym(ParseNodeType.Expression)
+            ]),
+        new NonterminalDefinition(
+            ParseNodeType.ParameterTuple,
+            [
+                Sym(TokenType.LeftParen),
+                new ZeroOrMoreSymbol(Sym(ParseNodeType.ParameterDefinition), Separator: Sym(TokenType.Comma)),
+                Sym(TokenType.RightParen)
+            ]),
+        new NonterminalDefinition(
+            ParseNodeType.ParameterDefinition,
+            [
+                Sym(ParseNodeType.Identifier),
+                Sym(TokenType.Colon),
+                Sym(ParseNodeType.Identifier)
+            ]),
+        new NonterminalDefinition(
+            ParseNodeType.ExplicitReturnType,
+            [
+                Sym(TokenType.Colon),
+                Sym(ParseNodeType.Identifier)
+            ]),
 
         new PostfixExpressionDefinition(
             ParseNodeType.FunctionCall,
-            [ Sym(ParseNodeType.Expression), Sym(TokenType.LeftParen), Sym(ParseNodeType.Expression), Sym(TokenType.RightParen) ],
+            [
+                Sym(ParseNodeType.Expression),
+                new OptionalSymbol(Sym(ParseNodeType.TypeArgumentTuple)),
+                Sym(ParseNodeType.ArgumentTuple)
+            ],
             12
         ),
+        new NonterminalDefinition(
+            ParseNodeType.TypeArgumentTuple,
+            [
+                Sym(TokenType.LeftSquareBracket),
+                new ZeroOrMoreSymbol(Sym(ParseNodeType.Identifier), Separator: Sym(TokenType.Comma)),
+                Sym(TokenType.RightSquareBracket)
+            ]),
+        new NonterminalDefinition(
+            ParseNodeType.ArgumentTuple,
+            [
+                Sym(TokenType.LeftParen),
+                new ZeroOrMoreSymbol(Sym(ParseNodeType.Expression), Separator: Sym(TokenType.Comma)),
+                Sym(TokenType.RightParen)
+            ]),
 
         new NonterminalDefinition(ParseNodeType.SingleLineComment, [ Sym(TokenType.SingleLineComment) ])
     ];
@@ -118,13 +196,20 @@ public static class Parser
 
     public static readonly Dictionary<TokenType, PrefixExpressionDefinition> TokenTypeToPrefixExpressionDefinitions =
         PrefixExpressionDefinitions
-            .SelectMany(prefixExpressionDefinition => GetPossibleFirstTokenTypes(prefixExpressionDefinition).Select(tokenType => (tokenType, prefixExpressionDefinition)))
-            .ToDictionary(pair => pair.tokenType, pair => pair.prefixExpressionDefinition);
+            .SelectMany(ped => GetPossibleFirstTokenTypes(ped).Select(tokenType => (tokenType, ped)))
+            .ToDictionary(pair => pair.tokenType, pair => pair.ped);
+
+    public static readonly Dictionary<TokenType, InfixExpressionDefinition> TokenTypeAfterExpressionToInfixExpressionDefinitions =
+        Grammar
+            .OfType<InfixExpressionDefinition>()
+            .SelectMany(ied => GetPossibleFirstTokenTypes(ied.RHS.Skip(1)).Select(tokenType => (tokenType, ied)))
+            .ToDictionary(pair => pair.tokenType, pair => pair.ied);
 
     public static readonly Dictionary<TokenType, PostfixExpressionDefinition> TokenTypeAfterExpressionToPostfixExpressionDefinitions =
         Grammar
             .OfType<PostfixExpressionDefinition>()
-            .ToDictionary(postfixExpressionDefinition => GetPossibleFirstTokenTypes(postfixExpressionDefinition.RHS[1]).Single(), postfixExpressionDefinition => postfixExpressionDefinition);
+            .SelectMany(ped => GetPossibleFirstTokenTypes(ped.RHS.Skip(1)).Select(tokenType => (tokenType, ped)))
+            .ToDictionary(pair => pair.tokenType, pair => pair.ped);
 
     public static ParseNode Parse(List<Token> tokens)
     {
@@ -163,30 +248,51 @@ public static class Parser
                 var token = ReadToken(state);
                 if (token.Type != terminalSymbol.TokenType)
                 {
-                    throw new Exception($"Expected token type {terminalSymbol.TokenType} but got {token.Type}");
+                    throw new Exception($"Expected token type {terminalSymbol.TokenType} but got {token.Text} ({token.Type})");
                 }
                 return [new(ParseNodeType.Token, new(), token)];
             case NonterminalSymbol nonterminalSymbol:
                 return [ParseNonterminal(state, nonterminalSymbol.ParseNodeType)];
-            case ZeroOrMoreSymbol zeroOrMoreSymbol:
-                var possibleFirstTokenTypes = GetPossibleFirstTokenTypes(zeroOrMoreSymbol.GrammarSymbol);
-                var separatorFirstTokenTypes = zeroOrMoreSymbol.Separator == null ? new HashSet<TokenType>() : GetPossibleFirstTokenTypes(zeroOrMoreSymbol.Separator);
-                List<ParseNode> nodes = new();
-                while (TryPeekToken(state) != null && possibleFirstTokenTypes.Contains(PeekToken(state).Type))
+            case OptionalSymbol optionalSymbol:
                 {
-                    nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.GrammarSymbol));
+                    var possibleFirstTokenTypes = GetPossibleFirstTokenTypes(optionalSymbol);
+                    List<ParseNode> nodes = new();
 
-                    if (zeroOrMoreSymbol.Separator != null)
+                    if (TryPeekToken(state) != null && possibleFirstTokenTypes.Contains(PeekToken(state).Type))
                     {
-                        if (TryPeekToken(state) == null || !separatorFirstTokenTypes.Contains(PeekToken(state).Type))
-                        {
-                            break;
-                        }
-
-                        nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.Separator));
+                        nodes.AddRange(ParseGrammarSymbol(state, optionalSymbol.GrammarSymbol));
                     }
+
+                    return nodes;
                 }
-                return nodes;
+            case ZeroOrMoreSymbol zeroOrMoreSymbol:
+                {
+                    var possibleFirstTokenTypes = GetPossibleFirstTokenTypes(zeroOrMoreSymbol);
+                    var separatorFirstTokenTypes = zeroOrMoreSymbol.Separator == null ? new HashSet<TokenType>() : GetPossibleFirstTokenTypes(zeroOrMoreSymbol.Separator);
+                    List<ParseNode> nodes = new();
+                    while (TryPeekToken(state) != null && possibleFirstTokenTypes.Contains(PeekToken(state).Type))
+                    {
+                        nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.GrammarSymbol));
+
+                        if (zeroOrMoreSymbol.Separator != null)
+                        {
+                            if (TryPeekToken(state) == null || !separatorFirstTokenTypes.Contains(PeekToken(state).Type))
+                            {
+                                break;
+                            }
+
+                            nodes.AddRange(ParseGrammarSymbol(state, zeroOrMoreSymbol.Separator));
+                        }
+                    }
+                    return nodes;
+                }
+            case OrderedChoiceSymbol orderedChoiceSymbol:
+                {
+                    var nextToken = PeekToken(state);
+                    var matchingGrammarSymbol = orderedChoiceSymbol.GrammarSymbolChoices
+                        .First(grammarSymbol => GetPossibleFirstTokenTypes(grammarSymbol).Contains(nextToken.Type));
+                    return ParseGrammarSymbol(state, matchingGrammarSymbol);
+                }
             default:
                 throw new NotImplementedException();
         }
@@ -211,27 +317,54 @@ public static class Parser
         return ParseNonterminal(state, prefixExpressionDefinition);
     }
 
-    public static ParseNode ParsePostfixAndInfixExpressions(ParseState state, ParseNode left, int minBindingPower)
+    public static ParseNode ParsePostfixAndInfixExpressions(ParseState state, ParseNode prefixExpr, int minBindingPower)
     {
         var nextToken = TryPeekToken(state);
         if (nextToken == null)
         {
-            return left;
+            return prefixExpr;
         }
 
-        var postfixExpressionDefinition = TokenTypeAfterExpressionToPostfixExpressionDefinitions.GetValueOrDefault(nextToken.Type);
-        if (postfixExpressionDefinition == null || postfixExpressionDefinition.LeftBindingPower < minBindingPower)
+        var postfixExprDef = TokenTypeAfterExpressionToPostfixExpressionDefinitions.GetValueOrDefault(nextToken.Type);
+
+        if (postfixExprDef != null)
         {
-            return left;
+            if (postfixExprDef.LeftBindingPower < minBindingPower)
+            {
+                return prefixExpr;
+            }
+            else
+            {
+                var postfixExpr = ParseNonterminal(state, postfixExprDef, [prefixExpr]);
+                return ParsePostfixAndInfixExpressions(state, postfixExpr, minBindingPower);
+            }
         }
+        else
+        {
+            var infixExprDef = TokenTypeAfterExpressionToInfixExpressionDefinitions.GetValueOrDefault(nextToken.Type);
 
-        var postfixExpression = ParseNonterminal(state, postfixExpressionDefinition, [left]);
-        return ParsePostfixAndInfixExpressions(state, postfixExpression, minBindingPower);
+            if (infixExprDef != null)
+            {
+                if (infixExprDef.LeftBindingPower < minBindingPower)
+                {
+                    return prefixExpr;
+                }
+                else
+                {
+                    var infixExpr = ParseNonterminal(state, infixExprDef, [prefixExpr]);
+                    return ParsePostfixAndInfixExpressions(state, infixExpr, minBindingPower);
+                }
+            }
+            else
+            {
+                return prefixExpr;
+            }
+        }
     }
 
     private static HashSet<TokenType> GetPossibleFirstTokenTypes(NonterminalDefinition nonterminalDefinition)
     {
-        return GetPossibleFirstTokenTypes(nonterminalDefinition.RHS.First());
+        return GetPossibleFirstTokenTypes(nonterminalDefinition.RHS);
     }
         
     private static HashSet<TokenType> GetPossibleFirstTokenTypes(IGrammarSymbol grammarSymbol)
@@ -240,8 +373,38 @@ public static class Parser
         {
             TerminalSymbol terminalSymbol => new HashSet<TokenType> { terminalSymbol.TokenType },
             NonterminalSymbol nonterminalSymbol => GetPossibleFirstTokenTypes(nonterminalSymbol.ParseNodeType),
+            OptionalSymbol optionalSymbol => GetPossibleFirstTokenTypes(optionalSymbol.GrammarSymbol),
+            ZeroOrMoreSymbol zeroOrMoreSymbol => GetPossibleFirstTokenTypes(zeroOrMoreSymbol.GrammarSymbol),
+            OrderedChoiceSymbol orderedChoiceSymbol => orderedChoiceSymbol.GrammarSymbolChoices.SelectMany(GetPossibleFirstTokenTypes).ToHashSet(),
             _ => throw new NotImplementedException()
         };
+    }
+
+    private static HashSet<TokenType> GetPossibleFirstTokenTypes(IEnumerable<IGrammarSymbol> grammarSymbols)
+    {
+        var firstGrammarSymbol = grammarSymbols.First();
+        HashSet<TokenType> possibleFirstTokenTypes = GetPossibleFirstTokenTypes(firstGrammarSymbol);
+
+        bool isOptional = firstGrammarSymbol switch
+        {
+            TerminalSymbol terminalSymbol => false,
+            NonterminalSymbol nonterminalSymbol => false,
+            OptionalSymbol optionalSymbol => true,
+            ZeroOrMoreSymbol zeroOrMoreSymbol => true,
+            OrderedChoiceSymbol orderedChoiceSymbol => false,
+            _ => throw new NotImplementedException()
+        };
+
+        if (!isOptional)
+        {
+            return possibleFirstTokenTypes;
+        }
+        else
+        {
+            return possibleFirstTokenTypes
+                .Concat(GetPossibleFirstTokenTypes(grammarSymbols.Skip(1)))
+                .ToHashSet();
+        }
     }
 
     public static HashSet<TokenType> GetPossibleFirstTokenTypes(ParseNodeType parseNodeType)
@@ -251,11 +414,11 @@ public static class Parser
             return PrefixExpressionDefinitions.SelectMany(GetPossibleFirstTokenTypes).ToHashSet();
         }
 
-        return Grammar
-            .Single(r => r.ParseNodeType == parseNodeType)
-            .RHS
-            .SelectMany(GetPossibleFirstTokenTypes)
-            .ToHashSet();
+        return GetPossibleFirstTokenTypes(
+            Grammar
+                .Single(r => r.ParseNodeType == parseNodeType)
+                .RHS
+            );
     }
 
     private static Token? TryPeekToken(ParseState state)
@@ -270,6 +433,11 @@ public static class Parser
     
     private static Token ReadToken(ParseState state)
     {
+        if (state.NextTokenIndex >= state.Tokens.Count)
+        {
+            throw new Exception("Unexpected end of input");
+        }
+
         var token = state.Tokens[state.NextTokenIndex];
         state.NextTokenIndex++;
         return token;
