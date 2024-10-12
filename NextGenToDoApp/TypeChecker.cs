@@ -38,7 +38,7 @@ public static class Symbols
 {
     public static readonly ISymbol NothingSymbol = new SimpleSymbol("Nothing", Types.Nothing);
     public static readonly ISymbol TextSymbol = new SimpleSymbol("Text", Types.Text);
-    public static readonly ISymbol HtmlNodeSymbol = new SimpleSymbol("HtmlNode", Types.HtmlNode);
+    public static readonly ISymbol HtmlNodeSymbol = new SimpleSymbol("HTMLNode", Types.HtmlNode);
     public static readonly ISymbol ExecJSSymbol = new SimpleSymbol(
         "exec_JS",
         new FunctionType(

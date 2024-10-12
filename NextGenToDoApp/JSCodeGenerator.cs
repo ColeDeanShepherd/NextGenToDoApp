@@ -30,7 +30,7 @@ public static class JSCodeGenerator
             ParseNode returnType = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.ExplicitReturnType);
             ParseNode body = parseNode.Children.Last();
 
-            return $"{Generate(paramTuple)} => {Generate(body)}";
+            return $"{Generate(paramTuple)} => {{ {Generate(body)} }}";
         }
         else if (parseNode.ParseNodeType == ParseNodeType.ParameterTuple)
         {

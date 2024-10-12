@@ -7,7 +7,7 @@ public class CompilerTests
     {
         string sourceCode = @"log = fn (text: Text): Nothing -> exec_JS[Nothing](""console.log(text)"")";
         var jsCode = Compiler.Compile(sourceCode);
-        Assert.Equal("const log = (text) => console.log(text);\r\n", jsCode);
+        Assert.Equal("const log = (text) => { console.log(text); }\r\n", jsCode);
     }
 
     [Fact]
