@@ -27,7 +27,7 @@ public static class Lexer
 {
     public static readonly List<(TokenType TokenType, string RegexString)> TokenRegexPatterns =
     [
-        (TokenType.SingleLineComment, @"//[^\\r\n]*"),
+        (TokenType.SingleLineComment, @"//[^\r\n]*"),
 
         (TokenType.LeftParen, @"\("),
         (TokenType.RightParen, @"\)"),
