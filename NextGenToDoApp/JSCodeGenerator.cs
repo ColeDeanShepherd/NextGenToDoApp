@@ -19,15 +19,15 @@ public static class JSCodeGenerator
         }
         else if (parseNode.ParseNodeType == ParseNodeType.Binding)
         {
-            ParseNode identNode = parseNode.Children[0];
-            ParseNode valueNode = parseNode.Children.Last();
+            ParseNode identNode = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.Identifier);
+            ParseNode valueNode = parseNode.Children.First(c => c.ParseNodeType.IsExpression());
 
             return $"const {Generate(identNode)} = {Generate(valueNode)};";
         }
         else if (parseNode.ParseNodeType == ParseNodeType.FunctionDefinition)
         {
-            ParseNode argTuple = parseNode.Children[1];
-            ParseNode returnType = parseNode.Children[parseNode.Children.Count - 3];
+            ParseNode argTuple = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.ArgumentTuple);
+            ParseNode returnType = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.ExplicitReturnType);
             ParseNode body = parseNode.Children.Last();
 
             return $"{Generate(argTuple)} => {Generate(body)}";
