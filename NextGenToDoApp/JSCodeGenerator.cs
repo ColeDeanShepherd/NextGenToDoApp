@@ -49,12 +49,21 @@ public static class JSCodeGenerator
         {
             var functionSymbol = parseNode.Children[0].Symbol;
 
-            var argTuple = parseNode.Children.Where(c => c.ParseNodeType == ParseNodeType.ArgumentTuple).First();
-            var argNodes = argTuple.Children.Skip(1).Where(c => c.ParseNodeType.IsExpression()).ToList();
-            var args = argNodes.Select(Generate).ToList();
+            if (functionSymbol == Symbols.ExecJSSymbol)
+            {
+                var argTuple = parseNode.Children.Where(c => c.ParseNodeType == ParseNodeType.ArgumentTuple).First();
+                var arg = argTuple.Children.First(c => c.ParseNodeType == ParseNodeType.TextLiteral);
+                return arg.Children.First(c => c.ParseNodeType == ParseNodeType.Token).Token!.Text.Trim('"');
+            }
+            else
+            {
+                var argTuple = parseNode.Children.Where(c => c.ParseNodeType == ParseNodeType.ArgumentTuple).First();
+                var argNodes = argTuple.Children.Skip(1).Where(c => c.ParseNodeType.IsExpression()).ToList();
+                var args = argNodes.Select(Generate).ToList();
 
-            var arg = args.Single();
-            return $"window.{Generate(parseNode.Children[0])}({arg})";
+                var arg = args.Single();
+                return $"window.{Generate(parseNode.Children[0])}({arg})";
+            }
         }
         else if (parseNode.ParseNodeType == ParseNodeType.Identifier)
         {
