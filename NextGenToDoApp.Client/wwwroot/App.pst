@@ -1,8 +1,12 @@
+set_document_title = fn (title: Text): Nothing -> exec_JS[Nothing]("document.title = title")
 log = fn (text: Text): Nothing -> exec_JS[Nothing]("console.log(text)")
 
-//
-//set_document_title = fn (title: Text): Nothing -> exec_JS[Nothing]("document.title = title")
-//
+set_document_title("Next Gen To-Do App")
+
+
+
+
+
 //create_UI = fn (node: HTMLNode): Nothing -> exec_JS[Nothing]("document.body.appendChild(node)")
 //
 //h1 = fn (text: Text): HTMLNode ->
@@ -16,7 +20,6 @@ log = fn (text: Text): Nothing -> exec_JS[Nothing]("console.log(text)")
 //
 //txt = fn (text: Text): HTMLNode -> exec_JS[HTMLNode]("document.createTextNode(text)")
 //
-//set_document_title("Next Gen To-Do App")
 //
 //create_UI(
 //  div([ h1([ txt("Next Gen To-Do App") ]) ])

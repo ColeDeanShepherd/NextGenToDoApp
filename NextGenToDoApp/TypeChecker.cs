@@ -1,4 +1,6 @@
-﻿namespace NextGenToDoApp;
+﻿using System.Reflection.Metadata.Ecma335;
+
+namespace NextGenToDoApp;
 
 #region Types
 
@@ -26,16 +28,18 @@ public static class Types
 public interface ISymbol
 {
     string Name { get; }
+
+    IType Type { get; }
 }
 
-public record BuiltInSymbol(string Name, IType Type) : ISymbol;
+public record SimpleSymbol(string Name, IType Type) : ISymbol;
 
 public static class Symbols
 {
-    public static readonly ISymbol NothingSymbol = new BuiltInSymbol("Nothing", Types.Nothing);
-    public static readonly ISymbol TextSymbol = new BuiltInSymbol("Text", Types.Text);
-    public static readonly ISymbol HtmlNodeSymbol = new BuiltInSymbol("HtmlNode", Types.HtmlNode);
-    public static readonly ISymbol ExecJSSymbol = new BuiltInSymbol(
+    public static readonly ISymbol NothingSymbol = new SimpleSymbol("Nothing", Types.Nothing);
+    public static readonly ISymbol TextSymbol = new SimpleSymbol("Text", Types.Text);
+    public static readonly ISymbol HtmlNodeSymbol = new SimpleSymbol("HtmlNode", Types.HtmlNode);
+    public static readonly ISymbol ExecJSSymbol = new SimpleSymbol(
         "exec_JS",
         new FunctionType(
             new List<string> { "TReturn" },
@@ -54,21 +58,51 @@ public static class Symbols
 
 #endregion Symbols
 
+public record TypeCheckerState(Dictionary<string, ISymbol> NamesToSymbols);
+
 public static class TypeChecker
 {
-    public static readonly Dictionary<string, ISymbol> NamesToSymbols =
-        Symbols.All.ToDictionary(s => s.Name);
-
     public static IType? CheckType(ParseNode parseNode)
+    {
+        Dictionary<string, ISymbol> namesToSymbols = Symbols.All.ToDictionary(s => s.Name);
+        TypeCheckerState state = new(namesToSymbols);
+
+        return CheckType(state, parseNode);
+    }
+
+    public static IType? InferFunctionCallReturnType(Dictionary<string, IType> knownTypeArguments, FunctionType fnType, List<IType> argTypes)
+    {
+        if (fnType.ReturnType is TypeArgumentType returnTypeArg)
+        {
+            if (knownTypeArguments.ContainsKey(returnTypeArg.Name))
+            {
+                return knownTypeArguments[returnTypeArg.Name];
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+        else
+        {
+            return fnType.ReturnType;
+        }
+    }
+
+    public static IType? CheckType(TypeCheckerState state, ParseNode parseNode)
     {
         if (parseNode.ParseNodeType == ParseNodeType.Binding)
         {
-            ParseNode identNode = parseNode.Children[0];
+            ParseNode identNode = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.Identifier);
+            string name = identNode.Children.First(c => c.ParseNodeType == ParseNodeType.Token).Token!.Text;
             ParseNode valueNode = parseNode.Children.Last();
-            IType? valueType = CheckType(valueNode);
+            IType? valueType = CheckType(state, valueNode);
 
             identNode.Type = valueType;
             parseNode.Type = valueType;
+
+            SimpleSymbol symbol = new(name, valueType!);
+            state.NamesToSymbols.Add(name, symbol);
 
             return valueType;
         }
@@ -76,28 +110,77 @@ public static class TypeChecker
         {
             ParseNode identNode = parseNode.Children[0];
             ParseNode typeNode = parseNode.Children.Last();
-            IType? type = CheckType(typeNode);
+            IType? type = CheckType(state, typeNode);
 
             identNode.Type = type;
             parseNode.Type = type;
 
             return type;
         }
+        else if (parseNode.ParseNodeType == ParseNodeType.FunctionDefinition)
+        {
+            // TODO: handle type parameters after they're added
+
+            //
+
+            ParseNode paramTupleNode = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.ParameterTuple);
+            List<IType?> paramTypes = paramTupleNode.Children
+                .Where(c => c.ParseNodeType == ParseNodeType.ParameterDefinition)
+                .Select(c => CheckType(state, c))
+                .ToList();
+
+            if (paramTypes.Any(t => t == null))
+            {
+                throw new NotImplementedException();
+            }
+
+            ParseNode explicitReturnTypeNode = parseNode.Children.First(c => c.ParseNodeType == ParseNodeType.ExplicitReturnType);
+            IType? returnType = CheckType(state, explicitReturnTypeNode);
+
+            if (returnType == null)
+            {
+                throw new NotImplementedException();
+            }
+
+            List<string> typeArgNames = [];
+            FunctionType type = new(typeArgNames, paramTypes.Cast<IType>().ToList(), returnType);
+            return type;
+
+            //ParseNode bodyNode = parseNode.Children.Last(c => c.ParseNodeType.IsExpression());
+            //IType? returnType = InferFunctionCallReturnType(knownTypeArgs,  CheckType(state, bodyNode);
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.ExplicitReturnType)
+        {
+            ParseNode identNode = parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.Identifier);
+            ParseNode tokenNode = identNode.Children.Single(c => c.ParseNodeType == ParseNodeType.Token);
+            string name = tokenNode.Token!.Text;
+            ISymbol symbol = state.NamesToSymbols[name];
+
+            parseNode.Type = symbol.Type;
+
+            return symbol.Type;
+        }
         else
         {
             foreach (var child in parseNode.Children)
             {
-                CheckType(child);
+                CheckType(state, child);
             }
 
             IType? type = parseNode.ParseNodeType switch
             {
-                ParseNodeType.Expression => CheckType(parseNode.Children[0]),
-                ParseNodeType.FunctionCall => (CheckType(parseNode.Children[0]) as FunctionType)?.ReturnType,
+                ParseNodeType.Expression => CheckType(state, parseNode.Children[0]),
+                ParseNodeType.FunctionCall => (CheckType(state, parseNode.Children[0]) as FunctionType)?.ReturnType,
                 ParseNodeType.TextLiteral => Types.Text,
-                ParseNodeType.ListLiteral => new ListType(CheckType(parseNode.Children[0])!),
-                ParseNodeType.Identifier => CheckType(parseNode, NamesToSymbols[parseNode.Children[0].Token!.Text]),
-                _ => null
+                ParseNodeType.ListLiteral => new ListType(CheckType(state, parseNode.Children[0])!),
+                ParseNodeType.Identifier => CheckType(state, parseNode, state.NamesToSymbols[parseNode.Children[0].Token!.Text]),
+                ParseNodeType.TypeArgumentTuple => null,
+                ParseNodeType.ParameterTuple => null,
+                ParseNodeType.ArgumentTuple => null,
+                ParseNodeType.Token => null,
+                ParseNodeType.ExplicitReturnType => null,
+                ParseNodeType.Program => null,
+                _ => throw new NotImplementedException($"Unknown parse node type: {parseNode.ParseNodeType}")
             };
 
             parseNode.Type = type;
@@ -106,13 +189,13 @@ public static class TypeChecker
         }
     }
     
-    public static IType? CheckType(ParseNode parseNode, ISymbol symbol)
+    public static IType? CheckType(TypeCheckerState state, ParseNode parseNode, ISymbol symbol)
     {
         parseNode.Symbol = symbol;
 
         return symbol switch
         {
-            BuiltInSymbol builtInSymbol => builtInSymbol.Type,
+            SimpleSymbol builtInSymbol => builtInSymbol.Type,
             _ => null
         };
     }
