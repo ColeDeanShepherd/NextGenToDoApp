@@ -17,11 +17,40 @@ public static class JSCodeGenerator
 
             return sb.ToString();
         }
+        else if (parseNode.ParseNodeType == ParseNodeType.Binding)
+        {
+            ParseNode identNode = parseNode.Children[0];
+            ParseNode valueNode = parseNode.Children.Last();
+
+            return $"const {Generate(identNode)} = {Generate(valueNode)};";
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.FunctionDefinition)
+        {
+            ParseNode argTuple = parseNode.Children[1];
+            ParseNode returnType = parseNode.Children[parseNode.Children.Count - 3];
+            ParseNode body = parseNode.Children.Last();
+
+            return $"{Generate(argTuple)} => {Generate(body)}";
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.ParameterTuple)
+        {
+            var paramDefs = parseNode.Children.Where(c => c.ParseNodeType == ParseNodeType.ParameterDefinition).ToList();
+
+            return $"({string.Join(", ", paramDefs.Select(Generate))})";
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.ParameterDefinition)
+        {
+            ParseNode paramNameNode = parseNode.Children.Where(c => c.ParseNodeType == ParseNodeType.Identifier).First();
+            ParseNode paramNameTokenNode = paramNameNode.Children.Single();
+
+            return paramNameTokenNode.Token!.Text;
+        }
         else if (parseNode.ParseNodeType == ParseNodeType.FunctionCall)
         {
             var functionSymbol = parseNode.Children[0].Symbol;
 
-            var argNodes = parseNode.Children.Skip(1).Where(c => c.ParseNodeType.IsExpression()).ToList();
+            var argTuple = parseNode.Children.Where(c => c.ParseNodeType == ParseNodeType.ArgumentTuple).First();
+            var argNodes = argTuple.Children.Skip(1).Where(c => c.ParseNodeType.IsExpression()).ToList();
             var args = argNodes.Select(Generate).ToList();
 
             var arg = args.Single();
@@ -41,7 +70,7 @@ public static class JSCodeGenerator
 
             return sb.ToString();
         }
-        else if (parseNode.ParseNodeType == ParseNodeType.StringLiteral)
+        else if (parseNode.ParseNodeType == ParseNodeType.TextLiteral)
         {
             return $"\"{parseNode.Children.Single().Token!.Text.Trim('"')}\"";
         }

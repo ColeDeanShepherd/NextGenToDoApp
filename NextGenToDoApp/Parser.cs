@@ -12,7 +12,7 @@ public enum ParseNodeType
     FunctionCall,
     TypeArgumentTuple,
     ArgumentTuple,
-    StringLiteral,
+    TextLiteral,
     ListLiteral,
     Identifier,
     Token,
@@ -28,7 +28,7 @@ public static class ParseNodeTypeExtensions
             ParseNodeType.Binding => true,
             ParseNodeType.FunctionDefinition => true,
             ParseNodeType.FunctionCall => true,
-            ParseNodeType.StringLiteral => true,
+            ParseNodeType.TextLiteral => true,
             ParseNodeType.ListLiteral => true,
             ParseNodeType.Identifier => true,
             _ => false
@@ -121,7 +121,7 @@ public static class Parser
             LeftBindingPower: 4,
             RightBindingPower: 5),
 
-        new PrefixExpressionDefinition(ParseNodeType.StringLiteral, [ Sym(TokenType.StringLiteral) ]),
+        new PrefixExpressionDefinition(ParseNodeType.TextLiteral, [ Sym(TokenType.TextLiteral) ]),
         new PrefixExpressionDefinition(
             ParseNodeType.ListLiteral,
             [

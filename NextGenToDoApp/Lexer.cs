@@ -17,7 +17,7 @@ public enum TokenType
 
     FnKeyword,
 
-    StringLiteral,
+    TextLiteral,
     Identifier,
 }
 
@@ -40,8 +40,8 @@ public static class Lexer
 
         (TokenType.FnKeyword, @"fn"),
 
-        (TokenType.StringLiteral, @"""[^""]*"""),
-        (TokenType.Identifier, @"[a-zA-Z][a-zA-Z0-9]*"),
+        (TokenType.TextLiteral, @"""[^""]*"""),
+        (TokenType.Identifier, @"[_a-zA-Z][_a-zA-Z0-9]*"),
     ];
 
     public static List<Token> Tokenize(string sourceCode)
