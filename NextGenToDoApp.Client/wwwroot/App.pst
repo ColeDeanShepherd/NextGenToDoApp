@@ -1,11 +1,12 @@
-consoleLog = fn (text: Text): Nothing -> execJs[Nothing]("console.log(text)")
+log = fn (text: Text): Nothing -> exec_JS[Nothing]("console.log(text)")
+
 //
-//setDocumentTitle = fn (title: Text): Nothing -> execJs[Nothing]("document.title = title")
+//set_document_title = fn (title: Text): Nothing -> exec_JS[Nothing]("document.title = title")
 //
-//createUI = fn (node: HTMLNode): Nothing -> execJs[Nothing]("document.body.appendChild(node)")
+//create_UI = fn (node: HTMLNode): Nothing -> exec_JS[Nothing]("document.body.appendChild(node)")
 //
 //h1 = fn (text: Text): HTMLNode ->
-//	execJs[HTMLNode](
+//	exec_JS[HTMLNode](
 //"const elem = document.createElement('h1');
 //for (const child of children) {
 //    elem.appendChild(child);
@@ -13,10 +14,10 @@ consoleLog = fn (text: Text): Nothing -> execJs[Nothing]("console.log(text)")
 //return elem;"
 //	)
 //
-//txt = fn (text: Text): HTMLNode -> execJs[HTMLNode]("document.createTextNode(text)")
+//txt = fn (text: Text): HTMLNode -> exec_JS[HTMLNode]("document.createTextNode(text)")
 //
-//setDocumentTitle("Next Gen To-Do App")
+//set_document_title("Next Gen To-Do App")
 //
-//createUI(
+//create_UI(
 //  div([ h1([ txt("Next Gen To-Do App") ]) ])
 //)
