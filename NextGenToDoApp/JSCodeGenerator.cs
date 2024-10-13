@@ -62,8 +62,21 @@ public static class JSCodeGenerator
                 var args = argNodes.Select(Generate).ToList();
 
                 var arg = args.Single();
-                return $"window.{Generate(parseNode.Children[0])}({arg})";
+                return $"{Generate(parseNode.Children[0])}({arg})";
             }
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.GenericInstantiation)
+        {
+            var exprNode = parseNode.Children.First(c => c.ParseNodeType.IsExpression());
+            var typeArgTupleNode = parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.TypeArgumentTuple);
+
+            return $"{Generate(exprNode)}{Generate(typeArgTupleNode)}";
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.TypeArgumentTuple)
+        {
+            var typeArgNodes = parseNode.Children.Where(c => c.ParseNodeType.IsExpression()).ToList();
+
+            return $"[{string.Join(", ", typeArgNodes.Select(Generate))}]";
         }
         else if (parseNode.ParseNodeType == ParseNodeType.Identifier)
         {

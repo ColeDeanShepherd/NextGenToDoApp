@@ -8,6 +8,10 @@ public interface IType { }
 
 public record BuiltInType(string Name) : IType;
 
+public record GenericType(string Name, List<string> TypeParamNames) : IType;
+
+public record InstantiatedGenericType(GenericType GenericType, List<IType> TypeArguments) : IType;
+
 public record ListType(IType ElementType) : IType;
 
 public record FunctionType(List<string> TypeArgNames, List<IType> ParamTypes, IType ReturnType) : IType;
@@ -18,6 +22,7 @@ public static class Types
 {
     public static readonly IType Nothing = new BuiltInType("Nothing");
     public static readonly IType Text = new BuiltInType("Text");
+    public static readonly IType GenericList = new GenericType("List", new List<string> { "T" });
     public static readonly IType HtmlNode = new BuiltInType("HtmlNode");
 }
 
@@ -38,6 +43,7 @@ public static class Symbols
 {
     public static readonly ISymbol NothingSymbol = new SimpleSymbol("Nothing", Types.Nothing);
     public static readonly ISymbol TextSymbol = new SimpleSymbol("Text", Types.Text);
+    public static readonly ISymbol ListSymbol = new SimpleSymbol("List", Types.GenericList);
     public static readonly ISymbol HtmlNodeSymbol = new SimpleSymbol("HTMLNode", Types.HtmlNode);
     public static readonly ISymbol ExecJSSymbol = new SimpleSymbol(
         "exec_JS",
@@ -51,6 +57,7 @@ public static class Symbols
     public static List<ISymbol> All = [
         NothingSymbol,
         TextSymbol,
+        ListSymbol,
         HtmlNodeSymbol,
         ExecJSSymbol
     ];
@@ -165,6 +172,23 @@ public static class TypeChecker
         else if (parseNode.ParseNodeType == ParseNodeType.FunctionCall)
         {
             IType? type = (CheckType(state, parseNode.Children[0]) as FunctionType)?.ReturnType;
+
+            parseNode.Type = type;
+
+            return type;
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.GenericInstantiation)
+        {
+            var genericExpr = parseNode.Children.First(c => c.ParseNodeType.IsExpression());
+
+            var genericType = CheckType(state, genericExpr) as GenericType;
+
+            var typeArgTupleNode = parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.TypeArgumentTuple);
+            var typeArgNodes = typeArgTupleNode.Children.Where(c => c.ParseNodeType == ParseNodeType.Identifier).ToList();
+
+            var typeArgTypes = typeArgNodes.Select(n => CheckType(state, n)).ToList();
+
+            var type = new InstantiatedGenericType(genericType!, typeArgTypes.Cast<IType>().ToList());
 
             parseNode.Type = type;
 

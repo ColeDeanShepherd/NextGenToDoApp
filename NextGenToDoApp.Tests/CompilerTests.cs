@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace NextGenToDoApp.Tests;
 
 public class CompilerTests
@@ -16,6 +18,13 @@ public class CompilerTests
         string sourceCode =
 @"set_document_title = fn (title: Text): Nothing -> exec_JS[Nothing](""document.title = title"")
 set_document_title(""Next Gen To-Do App"")";
+        var jsCode = Compiler.Compile(sourceCode);
+    }
+
+    [Fact]
+    public void GenericTypeReference()
+    {
+        string sourceCode = @"div = List[HTMLNode]";
         var jsCode = Compiler.Compile(sourceCode);
     }
 }

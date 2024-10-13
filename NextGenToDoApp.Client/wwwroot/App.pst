@@ -3,19 +3,33 @@ log = fn (text: Text): Nothing -> exec_JS[Nothing]("console.log(text)")
 
 create_UI = fn (node: HTMLNode): Nothing -> exec_JS[Nothing]("document.body.appendChild(node)")
 
-h1 = fn (text: Text): HTMLNode ->
-	exec_JS[HTMLNode](
-		"const elem = document.createElement('h1');
-		for (const child of children) {
-			elem.appendChild(child);
-		}
-		return elem;"
-	)
-
 txt = fn (text: Text): HTMLNode -> exec_JS[HTMLNode]("document.createTextNode(text)")
+
+div = fn (children: List[HTMLNode]): HTMLNode -> exec_JS[HTMLNode](
+	"const elem = document.createElement('div');
+	for (const child of children) {
+		elem.appendChild(child);
+	}
+	return elem;"
+)
 
 set_document_title("Next Gen To-Do App")
 
-//create_UI(
-//  div([ h1([ txt("Next Gen To-Do App") ]) ])
-//)
+create_UI(
+	txt("Next Gen To-Do App")
+)
+
+
+//	div([ h1([ txt("Next Gen To-Do App") ]) ])
+
+//h1 = fn (text: Text): HTMLNode ->
+//	exec_JS[HTMLNode](
+//		"const elem = document.createElement('h1');
+//		for (const child of children) {
+//			elem.appendChild(child);
+//		}
+//		return elem;"
+//	)
+
+
+div = fn (children: List[HTMLNode]): Nothing -> exec_JS[Nothing]("")

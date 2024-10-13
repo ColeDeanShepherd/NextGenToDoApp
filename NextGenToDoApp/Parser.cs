@@ -1,4 +1,6 @@
-﻿namespace NextGenToDoApp;
+﻿using System.Net.Security;
+
+namespace NextGenToDoApp;
 
 public enum ParseNodeType
 {
@@ -15,6 +17,7 @@ public enum ParseNodeType
     TextLiteral,
     ListLiteral,
     Identifier,
+    GenericInstantiation,
     Token,
     SingleLineComment,
 }
@@ -165,11 +168,19 @@ public static class Parser
             ParseNodeType.FunctionCall,
             [
                 Sym(ParseNodeType.Expression),
-                new OptionalSymbol(Sym(ParseNodeType.TypeArgumentTuple)),
                 Sym(ParseNodeType.ArgumentTuple)
             ],
-            12
+            LeftBindingPower: 12
         ),
+        new PostfixExpressionDefinition(
+            ParseNodeType.GenericInstantiation,
+            [
+                Sym(ParseNodeType.Expression),
+                Sym(ParseNodeType.TypeArgumentTuple),
+            ],
+            LeftBindingPower: 13
+        ),
+
         new NonterminalDefinition(
             ParseNodeType.TypeArgumentTuple,
             [
