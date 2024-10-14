@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace NextGenToDoApp.Tests;
 
 public class CompilerTests

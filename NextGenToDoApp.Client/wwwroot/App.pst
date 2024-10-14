@@ -31,18 +31,3 @@ create_UI(
 		div([ button([ txt("Click me!") ]) ])
 	])
 )
-
-
-//	div([ h1([ txt("Next Gen To-Do App") ]) ])
-
-//h1 = fn (text: Text): HTMLNode ->
-//	exec_JS[HTMLNode](
-//		"const elem = document.createElement('h1');
-//		for (const child of children) {
-//			elem.appendChild(child);
-//		}
-//		return elem;"
-//	)
-
-
-// div = fn (children: List[HTMLNode]): Nothing -> exec_JS[Nothing]("")
