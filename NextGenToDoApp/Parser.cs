@@ -229,7 +229,16 @@ public static class Parser
     public static ParseNode Parse(List<Token> tokens)
     {
         var state = new ParseState(tokens, 0);
-        return ParseNonterminal(state, RootNonterminal);
+
+        ParseNode program = ParseNonterminal(state, RootNonterminal);
+
+        bool parsedAllTokens = state.NextTokenIndex == state.Tokens.Count;
+        if (!parsedAllTokens)
+        {
+            throw new Exception("Did not parse all tokens");
+        }
+
+        return program;
     }
 
     public static ParseNode ParseNonterminal(ParseState state, ParseNodeType parseNodeType, List<ParseNode>? parsedChildren = null)
@@ -436,22 +445,32 @@ public static class Parser
             );
     }
 
+    private static void SkipTrivia(ParseState state)
+    {
+        while ((state.NextTokenIndex < state.Tokens.Count) && Lexer.IsTrivia(state.Tokens[state.NextTokenIndex].Type))
+        {
+            state.NextTokenIndex++;
+        }
+    }
+
     private static Token? TryPeekToken(ParseState state)
     {
-        return state.NextTokenIndex < state.Tokens.Count ? state.Tokens[state.NextTokenIndex] : null;
+        SkipTrivia(state);
+
+        return state.NextTokenIndex < state.Tokens.Count
+            ? state.Tokens[state.NextTokenIndex]
+            : null;
     }
 
     private static Token PeekToken(ParseState state)
     {
+        SkipTrivia(state);
         return state.Tokens[state.NextTokenIndex];
     }
     
     private static Token ReadToken(ParseState state)
     {
-        if (state.NextTokenIndex >= state.Tokens.Count)
-        {
-            throw new Exception("Unexpected end of input");
-        }
+        SkipTrivia(state);
 
         var token = state.Tokens[state.NextTokenIndex];
         state.NextTokenIndex++;

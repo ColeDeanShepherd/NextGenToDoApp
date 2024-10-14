@@ -31,6 +31,9 @@ public record Token(TokenType Type, string Text, TextPosition Position);
 
 public static class Lexer
 {
+    public static bool IsTrivia(TokenType tokenType) =>
+        tokenType == TokenType.SingleLineComment;
+
     public static readonly List<(TokenType TokenType, string RegexString)> TokenRegexPatterns =
     [
         (TokenType.SingleLineComment, @"//[^\r\n]*"),
