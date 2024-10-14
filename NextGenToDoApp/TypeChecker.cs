@@ -271,6 +271,9 @@ public static class TypeChecker
 
                 parseNode.Type = type;
 
+                string fnName = GetIdentifierText(parseNode.Children[0]);
+                parseNode.Symbol = state.NamesToSymbols[fnName];
+
                 return type;
             }
             else
