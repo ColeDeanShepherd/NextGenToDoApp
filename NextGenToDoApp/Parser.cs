@@ -1,4 +1,5 @@
-﻿using System.Net.Security;
+﻿using System.Diagnostics;
+using System.Net.Security;
 
 namespace NextGenToDoApp;
 
@@ -38,6 +39,7 @@ public static class ParseNodeTypeExtensions
         };
 }
 
+[DebuggerDisplay("{ToString()}")]
 public class ParseNode
 {
     public ParseNodeType ParseNodeType;

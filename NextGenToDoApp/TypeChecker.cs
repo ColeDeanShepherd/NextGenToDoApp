@@ -1,4 +1,5 @@
 ﻿using System.Reflection.Metadata.Ecma335;
+using System.Security.AccessControl;
 
 namespace NextGenToDoApp;
 
@@ -77,13 +78,13 @@ public static class TypeChecker
         return CheckType(state, parseNode);
     }
 
-    public static IType? InferFunctionCallReturnType(Dictionary<string, IType> knownTypeArguments, FunctionType fnType, List<IType> argTypes)
+    public static IType ReifyType(Dictionary<string, IType> knownTypeArguments, IType type)
     {
-        if (fnType.ReturnType is TypeArgumentType returnTypeArg)
+        if (type is TypeArgumentType typeArg)
         {
-            if (knownTypeArguments.ContainsKey(returnTypeArg.Name))
+            if (knownTypeArguments.ContainsKey(typeArg.Name))
             {
-                return knownTypeArguments[returnTypeArg.Name];
+                return knownTypeArguments[typeArg.Name];
             }
             else
             {
@@ -92,8 +93,71 @@ public static class TypeChecker
         }
         else
         {
-            return fnType.ReturnType;
+            return type;
         }
+    }
+
+    public static FunctionType ReifyFnType(Dictionary<string, IType> knownTypeArguments, FunctionType genericFnType)
+    {
+        var paramTypes = genericFnType.ParamTypes
+            .Select(t => ReifyType(knownTypeArguments, t))
+            .ToList();
+        var returnType = ReifyType(knownTypeArguments, genericFnType.ReturnType);
+
+        return new FunctionType([], paramTypes, returnType);
+    }
+
+    //public static FunctionType ReifyFnType(Dictionary<string, IType> knownTypeArguments, FunctionType genericFnType, List<IType> argTypes)
+    //{
+    //    var paramTypeAndArgTypes = genericFnType.ParamTypes.Zip(argTypes);
+    //    var reifiedParamTypes = paramTypeAndArgTypes
+    //        .Select(t =>
+    //        {
+    //            var (paramType, argType) = t;
+
+    //            if (argType is BuiltInType argBuiltInType)
+    //            {
+    //                if (paramType is BuiltInType paramBuiltInType)
+    //                {
+    //                    if (argBuiltInType == paramBuiltInType)
+    //                    {
+    //                        return argBuiltInType;
+    //                    }
+    //                    else
+    //                    {
+    //                        throw new Exception($"Parameter type {paramType} doesn't match argument type {argType}");
+    //                    }
+    //                }
+    //            }
+
+    //            throw new NotImplementedException();
+    //        })
+    //        .ToList();
+
+
+
+
+
+    //    //if (genericFnType.ReturnType is TypeArgumentType returnTypeArg)
+    //    //{
+    //    //    if (knownTypeArguments.ContainsKey(returnTypeArg.Name))
+    //    //    {
+    //    //        return typeParamNamesToTypes;
+    //    //    }
+    //    //    else
+    //    //    {
+    //    //        throw new NotImplementedException();
+    //    //    }
+    //    //}
+    //    //else
+    //    //{
+    //    //    return genericFnType.ReturnType;
+    //    //}
+    //}
+
+    public static string GetIdentifierText(ParseNode parseNode)
+    {
+        return parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.Token).Token!.Text;
     }
 
     public static IType? CheckType(TypeCheckerState state, ParseNode parseNode)
@@ -180,19 +244,39 @@ public static class TypeChecker
         else if (parseNode.ParseNodeType == ParseNodeType.GenericInstantiation)
         {
             var genericExpr = parseNode.Children.First(c => c.ParseNodeType.IsExpression());
+            var genericExprType = CheckType(state, genericExpr);
 
-            var genericType = CheckType(state, genericExpr) as GenericType;
+            if (genericExprType is GenericType genericType)
+            {
+                var typeArgTupleNode = parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.TypeArgumentTuple);
+                var typeArgNodes = typeArgTupleNode.Children.Where(c => c.ParseNodeType == ParseNodeType.Identifier).ToList();
 
-            var typeArgTupleNode = parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.TypeArgumentTuple);
-            var typeArgNodes = typeArgTupleNode.Children.Where(c => c.ParseNodeType == ParseNodeType.Identifier).ToList();
+                var typeArgTypes = typeArgNodes.Select(n => CheckType(state, n)).ToList();
 
-            var typeArgTypes = typeArgNodes.Select(n => CheckType(state, n)).ToList();
+                var type = new InstantiatedGenericType(genericType!, typeArgTypes.Cast<IType>().ToList());
 
-            var type = new InstantiatedGenericType(genericType!, typeArgTypes.Cast<IType>().ToList());
+                parseNode.Type = type;
 
-            parseNode.Type = type;
+                return type;
+            }
+            else if (genericExprType is FunctionType genericFnType)
+            {
+                var typeArgTupleNode = parseNode.Children.Single(c => c.ParseNodeType == ParseNodeType.TypeArgumentTuple);
+                var typeArgNodes = typeArgTupleNode.Children.Where(c => c.ParseNodeType == ParseNodeType.Identifier).ToList();
+                var typeArgTypes = typeArgNodes.Select(n => CheckType(state, n)!);
+                var typeParamAndArgTypes = genericFnType.TypeArgNames.Zip(typeArgTypes);
+                Dictionary<string, IType> knownTypeArgs = typeParamAndArgTypes.ToDictionary(t => t.First, t => t.Second);
 
-            return type;
+                var type = ReifyFnType(knownTypeArgs, genericFnType);
+
+                parseNode.Type = type;
+
+                return type;
+            }
+            else
+            {
+                throw new NotImplementedException($"Unexpected type: {genericExprType}");
+            }
         }
         else
         {
