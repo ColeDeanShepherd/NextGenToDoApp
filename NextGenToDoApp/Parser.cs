@@ -261,7 +261,7 @@ public static class Parser
                 var token = ReadToken(state);
                 if (token.Type != terminalSymbol.TokenType)
                 {
-                    throw new Exception($"Expected token type {terminalSymbol.TokenType} but got {token.Text} ({token.Type})");
+                    throw new Exception($"{token.Position} Expected token type {terminalSymbol.TokenType} but got {token.Text} ({token.Type})");
                 }
                 return [new(ParseNodeType.Token, new(), token)];
             case NonterminalSymbol nonterminalSymbol:

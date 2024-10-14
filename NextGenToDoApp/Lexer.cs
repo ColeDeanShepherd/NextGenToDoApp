@@ -2,7 +2,10 @@
 
 namespace NextGenToDoApp;
 
-public record struct TextPosition(int LineIndex, int ColumnIndex);
+public record struct TextPosition(int LineIndex, int ColumnIndex)
+{
+    public override string ToString() => $"({LineIndex + 1}, {ColumnIndex + 1})";
+}
 
 public enum TokenType
 {
