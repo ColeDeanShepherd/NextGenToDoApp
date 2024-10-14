@@ -13,4 +13,5 @@ const button = (children) => { const elem = document.createElement('button');
 	}
 	return elem; };
 set_document_title("Next Gen To-Do App")
-create_UI(div([div([txt("0")]), div([button([txt("Click me!")])])]))
+const cur_count = 0;
+create_UI(div([div([txt(cur_count)]), div([button([txt("Click me!")])])]))

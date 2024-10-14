@@ -22,6 +22,7 @@ public record TypeArgumentType(string Name) : IType;
 public static class Types
 {
     public static readonly IType Nothing = new BuiltInType("Nothing");
+    public static readonly IType Number = new BuiltInType("Number");
     public static readonly IType Text = new BuiltInType("Text");
     public static readonly IType GenericList = new GenericType("List", new List<string> { "T" });
     public static readonly IType HtmlNode = new BuiltInType("HtmlNode");
@@ -290,7 +291,7 @@ public static class TypeChecker
 
             IType? type = parseNode.ParseNodeType switch
             {
-                ParseNodeType.Expression => CheckType(state, parseNode.Children[0]),
+                ParseNodeType.NumberLiteral => Types.Number,
                 ParseNodeType.TextLiteral => Types.Text,
                 ParseNodeType.ListLiteral => new ListType(CheckType(state, parseNode.Children[0])!),
                 ParseNodeType.Identifier => CheckType(state, parseNode, state.NamesToSymbols[parseNode.Children[0].Token!.Text]),

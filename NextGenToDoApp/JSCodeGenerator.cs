@@ -82,6 +82,14 @@ public static class JSCodeGenerator
         {
             return parseNode.Children.Single().Token!.Text;
         }
+        else if (parseNode.ParseNodeType == ParseNodeType.NumberLiteral)
+        {
+            return parseNode.Children.Single().Token!.Text;
+        }
+        else if (parseNode.ParseNodeType == ParseNodeType.TextLiteral)
+        {
+            return $"\"{parseNode.Children.Single().Token!.Text.Trim('"')}\"";
+        }
         else if (parseNode.ParseNodeType == ParseNodeType.ListLiteral)
         {
             var sb = new StringBuilder();
@@ -91,10 +99,6 @@ public static class JSCodeGenerator
             sb.Append("]");
 
             return sb.ToString();
-        }
-        else if (parseNode.ParseNodeType == ParseNodeType.TextLiteral)
-        {
-            return $"\"{parseNode.Children.Single().Token!.Text.Trim('"')}\"";
         }
         else if (parseNode.ParseNodeType == ParseNodeType.SingleLineComment)
         {

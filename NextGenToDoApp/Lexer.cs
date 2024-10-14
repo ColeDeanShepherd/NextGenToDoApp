@@ -22,6 +22,7 @@ public enum TokenType
 
     FnKeyword,
 
+    NumberLiteral,
     TextLiteral,
     Identifier,
 }
@@ -45,6 +46,7 @@ public static class Lexer
 
         (TokenType.FnKeyword, @"fn"),
 
+        (TokenType.NumberLiteral, @"[0-9]+"),
         (TokenType.TextLiteral, @"""[^""]*"""),
         (TokenType.Identifier, @"[_a-zA-Z][_a-zA-Z0-9]*"),
     ];
@@ -85,7 +87,7 @@ public static class Lexer
 
             if (!readToken)
             {
-                throw new Exception($"Unexpected character at index {nextCharIndex}: '{sourceCode[nextCharIndex]}'");
+                throw new Exception($"Unexpected '{sourceCode[nextCharIndex]}' at index {nextCharPosition}");
             }
         }
 

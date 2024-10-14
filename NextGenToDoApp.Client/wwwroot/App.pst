@@ -23,9 +23,11 @@ button = fn (children: List[HTMLNode]): HTMLNode -> exec_JS[HTMLNode](
 
 set_document_title("Next Gen To-Do App")
 
+cur_count = 0
+
 create_UI(
 	div([
-		div([ txt("0") ]),
+		div([ txt(cur_count) ]),
 		div([ button([ txt("Click me!") ]) ])
 	])
 )
