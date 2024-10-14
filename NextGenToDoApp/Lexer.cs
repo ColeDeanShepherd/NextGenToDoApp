@@ -2,6 +2,8 @@
 
 namespace NextGenToDoApp;
 
+public record struct TextPosition(int LineIndex, int ColumnIndex);
+
 public enum TokenType
 {
     SingleLineComment,
@@ -21,7 +23,7 @@ public enum TokenType
     Identifier,
 }
 
-public record Token(TokenType Type, string Text);
+public record Token(TokenType Type, string Text, TextPosition Position);
 
 public static class Lexer
 {
@@ -50,6 +52,7 @@ public static class Lexer
             .ToDictionary(x => new Regex("^" + x.RegexString), x => x.TokenType);
 
         int nextCharIndex = 0;
+        TextPosition nextCharPosition = new(0, 0);
         List<Token> tokens = new();
 
         while (nextCharIndex < sourceCode.Length)
@@ -65,8 +68,13 @@ public static class Lexer
 
                 if (match.Success)
                 {
-                    nextCharIndex += match.Length;
-                    tokens.Add(new(tokenType, match.Value));
+                    tokens.Add(new(tokenType, match.Value, nextCharPosition));
+
+                    for (int i = 0; i < match.Length; i++)
+                    {
+                        ReadChar();
+                    }
+
                     readToken = true;
                     break;
                 }
@@ -80,11 +88,25 @@ public static class Lexer
 
         return tokens;
 
+        void ReadChar()
+        {
+            if (sourceCode[nextCharIndex] == '\n')
+            {
+                nextCharPosition = new(nextCharPosition.LineIndex + 1, 0);
+            }
+            else
+            {
+                nextCharPosition = new(nextCharPosition.LineIndex, nextCharPosition.ColumnIndex + 1);
+            }
+
+            nextCharIndex++;
+        }
+
         void SkipWhitespace()
         {
             while ((nextCharIndex < sourceCode.Length) && char.IsWhiteSpace(sourceCode[nextCharIndex]))
             {
-                nextCharIndex++;
+                ReadChar();
             }
         }
     }
