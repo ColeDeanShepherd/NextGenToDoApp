@@ -7,5 +7,10 @@ const div = (children) => { const elem = document.createElement('div');
 		elem.appendChild(child);
 	}
 	return elem; };
+const button = (children) => { const elem = document.createElement('button');
+	for (const child of children) {
+		elem.appendChild(child);
+	}
+	return elem; };
 set_document_title("Next Gen To-Do App")
-create_UI(txt("Next Gen To-Do App"))
+create_UI(div([div([txt("0")]), div([button([txt("Click me!")])])]))

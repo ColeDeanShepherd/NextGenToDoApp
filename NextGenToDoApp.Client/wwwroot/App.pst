@@ -13,10 +13,21 @@ div = fn (children: List[HTMLNode]): HTMLNode -> exec_JS[HTMLNode](
 	return elem;"
 )
 
+button = fn (children: List[HTMLNode]): HTMLNode -> exec_JS[HTMLNode](
+	"const elem = document.createElement('button');
+	for (const child of children) {
+		elem.appendChild(child);
+	}
+	return elem;"
+)
+
 set_document_title("Next Gen To-Do App")
 
 create_UI(
-	txt("Next Gen To-Do App")
+	div([
+		div([ txt("0") ]),
+		div([ button([ txt("Click me!") ]) ])
+	])
 )
 
 
