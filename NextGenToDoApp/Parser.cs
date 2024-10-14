@@ -157,7 +157,7 @@ public static class Parser
             [
                 Sym(ParseNodeType.Identifier),
                 Sym(TokenType.Colon),
-                Sym(ParseNodeType.Identifier)
+                Sym(ParseNodeType.Expression),
             ]),
         new NonterminalDefinition(
             ParseNodeType.ExplicitReturnType,

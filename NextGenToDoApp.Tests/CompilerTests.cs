@@ -27,4 +27,11 @@ set_document_title(""Next Gen To-Do App"")";
         string sourceCode = @"div = List[HTMLNode]";
         var jsCode = Compiler.Compile(sourceCode);
     }
+
+    [Fact]
+    public void FnWithInstantiatedGenericParamType()
+    {
+        string sourceCode = "test_fn = fn (children: List[HTMLNode]): Nothing -> exec_JS[Nothing](\"\")";
+        var jsCode = Compiler.Compile(sourceCode);
+    }
 }
