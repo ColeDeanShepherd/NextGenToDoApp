@@ -3,7 +3,7 @@ log = fn (text: Text): Nothing -> exec_JS[Nothing]("console.log(text)")
 
 create_UI = fn (node: HTMLNode): Nothing -> exec_JS[Nothing]("document.body.appendChild(node)")
 
-txt = fn (text: Text): HTMLNode -> exec_JS[HTMLNode]("document.createTextNode(text)")
+txt = fn (text: Text): HTMLNode -> exec_JS[HTMLNode]("return document.createTextNode(text);")
 
 div = fn (children: List[HTMLNode]): HTMLNode -> exec_JS[HTMLNode](
 	"const elem = document.createElement('div');
@@ -32,4 +32,4 @@ create_UI(
 //	)
 
 
-div = fn (children: List[HTMLNode]): Nothing -> exec_JS[Nothing]("")
+// div = fn (children: List[HTMLNode]): Nothing -> exec_JS[Nothing]("")
